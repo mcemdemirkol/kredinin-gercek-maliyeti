@@ -73,6 +73,14 @@ Son kontrol: 4 Ekim 2026.
 
 Oranlar sayfadaki "Vergi ve ücret ayarları" bölümünden değiştirilebilir.
 
+## Yayın
+
+Site `gh-pages` dalından yayınlanır; bu dal `main` ile aynıdır. Değişiklikten sonra:
+
+```bash
+git push origin main:gh-pages
+```
+
 ## Sınırlar
 
 - Yalnız eşit taksitli, sabit faizli kredi. Ara ödeme, erken kapama ve değişken faiz yok.
