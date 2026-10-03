@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kredinin gerçek maliyeti</title>
+<meta name="description" content="Tüketici kredisinde KKDF, BSMV ve tahsis ücreti eklenince taksit, toplam maliyet ve yıllık maliyet oranı ne oluyor? Tek sayfalık hesaplayıcı.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23681916'/%3E%3Ctext x='16' y='22.5' font-family='monospace' font-size='18' text-anchor='middle' fill='%23EEE8D6'%3E%E2%82%BA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Cem'in tema token'ları (arsenal/sablonlar/tema/temalar.css) */
+:root{
+  --paper:#EEE8D6; --card:#F5F1E4; --ink:#1F1B14; --mute:#7A7262; --soft:#C9BFA6; --line:#D6CDB3;
+  --green:#144B2D; --russet:#681916; --medici:#417777; --ocher:#E0B81F; --gold:#CCAA4B;
+  --border:#CFC5AA; --edge:#1F1B14; --hi:#681916; --hi-on:#EDE8DC; --grain:transparent;
+  --seg-principal:#417777; --seg-interest:#681916; --seg-kkdf:#C9A227; --seg-bsmv:#B5773A; --seg-fee:#8C8472;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]):not([data-theme="orman"]):not([data-theme="veri"]){
+    --paper:#171614; --card:#211F1C; --ink:#EDE8DC; --mute:#A69C8A; --soft:#4A463F; --line:#2E2C28;
+    --border:rgba(237,232,220,.16); --edge:rgba(237,232,220,.40); --hi:#CCAA4B; --hi-on:#171614; --grain:rgba(237,232,220,.045);
+    --seg-principal:#6FA3A0; --seg-interest:#C46A55; --seg-kkdf:#E0B81F; --seg-bsmv:#D39A5E; --seg-fee:#8E867A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#171614; --card:#211F1C; --ink:#EDE8DC; --mute:#A69C8A; --soft:#4A463F; --line:#2E2C28;
+  --border:rgba(237,232,220,.16); --edge:rgba(237,232,220,.40); --hi:#CCAA4B; --hi-on:#171614; --grain:rgba(237,232,220,.045);
+  --seg-principal:#6FA3A0; --seg-interest:#C46A55; --seg-kkdf:#E0B81F; --seg-bsmv:#D39A5E; --seg-fee:#8E867A;
+  color-scheme:dark;
+}
+:root[data-theme="orman"]{
+  --paper:#0E1A13; --card:#13241A; --ink:#EDE8DC; --mute:#A7AE98; --soft:#35523F; --line:#1E3527;
+  --border:rgba(204,170,75,.22); --edge:rgba(204,170,75,.55); --hi:#CCAA4B; --hi-on:#0E1A13; --grain:rgba(204,170,75,.05);
+  --seg-principal:#6FA3A0; --seg-interest:#C46A55; --seg-kkdf:#E0B81F; --seg-bsmv:#D39A5E; --seg-fee:#8A9480;
+  color-scheme:dark;
+}
+:root[data-theme="veri"]{
+  --paper:#0C0C0B; --card:#141413; --ink:#F2EFE6; --mute:#8E8A80; --soft:#34332F; --line:#1F1F1D;
+  --border:rgba(242,239,230,.10); --edge:rgba(242,239,230,.28); --hi:#7FC4BE; --hi-on:#0C0C0B; --grain:transparent;
+  --seg-principal:#7FC4BE; --seg-interest:#C46A55; --seg-kkdf:#E0B81F; --seg-bsmv:#D39A5E; --seg-fee:#6E6A62;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:16px}
+body{background-color:var(--paper);background-image:radial-gradient(var(--grain) 1px,transparent 1.3px);background-size:24px 24px;color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}
+.mono{font-family:"Geist Mono",ui-monospace,Consolas,monospace}
+.num{font-family:"Geist Mono",ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+.kicker{font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid var(--edge);display:flex;justify-content:space-between;gap:12px}
+.kicker .n{font-family:"Geist Mono",monospace;color:var(--hi)}
+header.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px}
+h1{font:400 clamp(32px,5vw,52px)/1.05 "Geist Mono",ui-monospace,monospace;letter-spacing:-.03em;margin:18px 0 10px;text-wrap:balance}
+h1 em{font-style:normal;color:var(--hi)}
+.lead{color:var(--mute);max-width:62ch;font-size:16px;margin:0}
+.seg{display:inline-flex;border:1px solid var(--edge);border-bottom-width:3px;border-radius:4px;overflow:hidden}
+.seg button{padding:7px 10px;background:transparent;color:var(--ink);border:0;font:500 12px/1 Inter,sans-serif;cursor:pointer}
+.seg button+button{border-left:1px solid var(--edge)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;margin-top:28px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:1fr}}
+/* Form */
+form.panel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+@media (max-width:880px){form.panel{position:static}}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label,.lbl{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.inp{display:flex;align-items:center;border:1px solid var(--border);border-radius:4px;background:var(--paper)}
+.inp:focus-within{border-color:var(--edge);outline:2px solid var(--hi);outline-offset:1px}
+.inp input{flex:1;min-width:0;width:100%;border:0;background:transparent;color:var(--ink);font:500 17px "Geist Mono",ui-monospace,monospace;padding:9px 10px;outline:none}
+.inp span{padding:0 10px;color:var(--mute);font:500 13px "Geist Mono",monospace}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.types button{padding:9px 6px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--ink);font:500 13px Inter,sans-serif;cursor:pointer}
+.types button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.hint{font-size:12px;color:var(--mute);margin:0;line-height:1.45}
+.hint b{color:var(--ink);font-weight:500}
+details.adv{border-top:1px dotted var(--soft);padding-top:10px}
+details.adv summary{cursor:pointer;font-size:13px;color:var(--mute)}
+details.adv[open] summary{margin-bottom:10px}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--hi);outline-offset:2px}
+/* Sonuçlar */
+.results{display:flex;flex-direction:column;gap:24px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:1040px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 14px 12px}
+.kpi .h{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.kpi .v{font:400 clamp(20px,1.9vw,28px)/1.15 "Geist Mono",monospace;letter-spacing:-.02em;margin-top:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi .v small{font-size:.5em;letter-spacing:0;color:var(--mute);margin-left:4px}
+.kpi{min-width:0;overflow:hidden}
+.kpi .v.accent{color:var(--hi)}
+.kpi .l{font-size:12px;color:var(--mute);margin-top:6px;line-height:1.4}
+section.block{display:flex;flex-direction:column;gap:14px}
+h2{font:400 22px/1.2 "Geist Mono",monospace;letter-spacing:-.01em;margin:0}
+.stack{display:flex;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.stack i{display:block;height:100%;transition:width .35s ease}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 16px}
+.legend div{display:flex;align-items:baseline;gap:8px;font-size:13px}
+.legend .sw{width:10px;height:10px;border-radius:2px;flex:none;transform:translateY(1px)}
+.legend .amt{margin-left:auto;font-family:"Geist Mono",monospace;font-variant-numeric:tabular-nums}
+.legend .pct{color:var(--mute);font-family:"Geist Mono",monospace;font-size:12px;width:44px;text-align:right}
+/* Oran merdiveni */
+.ladder{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:8px;background:var(--card);overflow:hidden}
+.step{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;padding:12px 16px;align-items:center}
+.step+.step{border-top:1px dotted var(--soft)}
+.step .t{font-size:14px}
+.step .t small{display:block;color:var(--mute);font-size:12px;margin-top:2px}
+.step .r{font:400 20px "Geist Mono",monospace;font-variant-numeric:tabular-nums;text-align:right}
+.step.final{background:var(--paper)}
+.step.final .r{color:var(--hi)}
+.bar{grid-column:1/-1;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--mute);transition:width .35s ease}
+.step.final .bar i{background:var(--hi)}
+.callout{border-left:3px solid var(--hi);background:var(--card);padding:12px 14px;border-radius:0 6px 6px 0;font-size:14px}
+.callout b{font-weight:600}
+/* Grafik */
+figure{margin:0;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 14px 10px}
+figure .t{display:flex;justify-content:space-between;gap:10px;font:500 13px "Geist Mono",monospace}
+figure .t span{color:var(--mute);font:400 12px Inter,sans-serif}
+svg.chart{width:100%;height:auto;display:block;margin-top:8px}
+/* Tablo */
+details.tbl summary{cursor:pointer;font:500 14px Inter,sans-serif;padding:10px 0}
+.scroll{overflow:auto;max-height:420px;border:1px solid var(--border);border-radius:8px}
+table{width:100%;border-collapse:collapse;font:400 13px "Geist Mono",monospace;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--card);text-align:right;font:500 11px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);padding:10px;border-bottom:1px solid var(--edge);white-space:nowrap}
+td{padding:8px 10px;text-align:right;border-top:1px dotted var(--soft);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tfoot td{font-weight:500;border-top:1px solid var(--edge);background:var(--card);position:sticky;bottom:0}
+.formula{font:400 13px/1.8 "Geist Mono",monospace;background:var(--card);border:1px dotted var(--soft);border-radius:6px;padding:12px 14px;overflow-x:auto;white-space:pre}
+.note{color:var(--mute);font-size:12.5px;line-height:1.55;max-width:80ch;margin:0}
+.note a{color:inherit}
+footer a{color:inherit}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);color:var(--mute);font-size:12px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+.results.stale>:not(#warn){opacity:.35}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body style="margin:0">
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="kicker"><span>Tüketici kredisi · Türkiye</span><span class="n">KKDF · BSMV · ücret</span></div>
+      <h1>Kredinin <em>gerçek</em> maliyeti</h1>
+      <p class="lead">Bankanın söylediği aylık faiz, ödediğin oranın yalnızca bir parçası. Vergileri ve ücretleri ekleyip taksiti, toplam maliyeti ve yıllık maliyet oranını çıkarır.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Tema">
+      <button type="button" data-t="light">Açık</button><button type="button" data-t="dark">Koyu</button><button type="button" data-t="orman">Orman</button><button type="button" data-t="veri">Veri</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <form class="panel" id="f" autocomplete="off">
+      <div class="field">
+        <span class="lbl">Kredi türü</span>
+        <div class="types" role="group" aria-label="Kredi türü">
+          <button type="button" data-type="ihtiyac" aria-pressed="true">İhtiyaç</button>
+          <button type="button" data-type="tasit" aria-pressed="false">Taşıt</button>
+          <button type="button" data-type="konut" aria-pressed="false">Konut</button>
+        </div>
+        <p class="hint" id="type-hint"></p>
+      </div>
+      <div class="field">
+        <label for="tutar">Kredi tutarı</label>
+        <div class="inp"><input id="tutar" inputmode="numeric" value="100.000"><span>TL</span></div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="vade">Vade</label>
+          <div class="inp"><input id="vade" inputmode="numeric" value="24"><span>ay</span></div>
+        </div>
+        <div class="field">
+          <label for="faiz">Aylık faiz</label>
+          <div class="inp"><input id="faiz" inputmode="decimal" value="3,29"><span>%</span></div>
+        </div>
+      </div>
+      <p class="hint">Başlangıç değerleri <b>örnektir</b>. Bankanın teklifindeki aylık akdi faizi gir.</p>
+      <details class="adv" id="adv">
+        <summary>Vergi ve ücret ayarları</summary>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="row2">
+            <div class="field"><label for="kkdf">KKDF</label><div class="inp"><input id="kkdf" inputmode="decimal" value="15"><span>%</span></div></div>
+            <div class="field"><label for="bsmv">BSMV</label><div class="inp"><input id="bsmv" inputmode="decimal" value="15"><span>%</span></div></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="tahsis">Tahsis ücreti</label><div class="inp"><input id="tahsis" inputmode="decimal" value="0,5"><span>%</span></div></div>
+            <div class="field"><label for="sigorta">Sigorta (tek sefer)</label><div class="inp"><input id="sigorta" inputmode="numeric" value="0"><span>TL</span></div></div>
+          </div>
+          <p class="hint">Vergiler faiz tutarı üzerinden alınır. Tahsis ücretine de BSMV eklenir. Sigorta zorunlu değilse 0 bırak.</p>
+        </div>
+      </details>
+    </form>
+
+    <div class="results" aria-live="polite">
+      <div class="callout" id="warn" hidden>Hesaplanamadı: tutar ve vade sıfırdan büyük olmalı (vade en çok 600 ay), oranlar sayı olmalı. Aşağıdaki sonuçlar son geçerli girişe ait.</div>
+      <div class="kpis">
+        <div class="kpi"><div class="h">Aylık taksit</div><div class="v accent num" id="k-taksit">—</div><div class="l" id="k-taksit-l"></div></div>
+        <div class="kpi"><div class="h">Toplam geri ödeme</div><div class="v num" id="k-toplam">—</div><div class="l" id="k-toplam-l"></div></div>
+        <div class="kpi"><div class="h">Kredinin bedeli</div><div class="v num" id="k-bedel">—</div><div class="l" id="k-bedel-l"></div></div>
+        <div class="kpi"><div class="h">Yıllık maliyet oranı</div><div class="v accent num" id="k-ymo">—</div><div class="l">faiz + vergi + ücret, bileşik</div></div>
+      </div>
+
+      <section class="block" id="dagilim">
+        <div class="kicker"><span>Paranın nereye gittiği</span><span class="n">01</span></div>
+        <div class="stack" id="stack" role="img" aria-label="Toplam ödemenin bileşenleri"></div>
+        <div class="legend" id="legend"></div>
+        <div class="callout" id="taxnote"></div>
+      </section>
+
+      <section class="block" id="merdiven">
+        <div class="kicker"><span>Söylenen oran ile ödenen oran</span><span class="n">02</span></div>
+        <h2>Oran merdiveni</h2>
+        <div class="ladder" id="ladder"></div>
+        <p class="note">Her basamak bir öncekine bir maliyet kalemi ekler. Son basamak, kredinin eline geçen net para ile yapılan ödemeleri eşitleyen iç verim oranıdır.</p>
+      </section>
+
+      <section class="block" id="taksit">
+        <div class="kicker"><span>Taksitin içi</span><span class="n">03</span></div>
+        <figure>
+          <div class="t">Her taksitte anapara ve faiz+vergi <span>TL · ay</span></div>
+          <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Aylara göre taksit dağılımı"></svg>
+          <div class="legend" style="margin-top:8px">
+            <div><i class="sw" style="background:var(--seg-principal)"></i>anapara</div>
+            <div><i class="sw" style="background:var(--seg-interest)"></i>faiz</div>
+            <div><i class="sw" style="background:var(--seg-kkdf)"></i>KKDF + BSMV</div>
+          </div>
+        </figure>
+        <details class="tbl">
+          <summary>Ödeme planı (tablo)</summary>
+          <div class="scroll"><table id="plan"></table></div>
+        </details>
+      </section>
+
+      <section class="block" id="formul">
+        <div class="kicker"><span>Nasıl hesaplanıyor</span><span class="n">04</span></div>
+        <div class="formula" id="formula">i   = aylık akdi faiz
+i*  = i · (1 + KKDF + BSMV)          vergiler faize eklenir
+A   = P · i* / (1 − (1 + i*)^(−n))    eşit taksit
+
+her ay:  faiz_k = kalan · i ,  vergi_k = faiz_k · (KKDF + BSMV)
+         anapara_k = A − faiz_k − vergi_k
+
+net ele geçen = P − tahsis · (1 + BSMV) − sigorta
+net ele geçen = Σ A / (1 + r)^k   →  r (aylık iç verim)
+yıllık maliyet oranı = (1 + r)^12 − 1</div>
+        <p class="note">Oranlar (son kontrol: 4 Ekim 2026): tüketici kredilerinde KKDF %15; Temmuz 2025'teki 10094 sayılı Karar yalnızca ticari döviz ve altın kredilerini değiştirdi (<a href="https://kpmgvergi.com/yayinlar/mali-bultenler/vergi/doviz-ve-altin-kredilerde-kkdf-oranini-degistiren-1772025-tarihli-ve-10094-sayili-cumhurbaskani-karari-1872025-tarihli-resmi-gazetede-yayimlandi/3139" target="_blank" rel="noopener">kaynak</a>). BSMV 7 Temmuz 2023'ten beri %15 (7345 sayılı Karar; <a href="https://www.alomaliye.com/2023/07/07/6802-sayili-banka-ve-sigorta-muameleleri-vergisi-karar-sayisi-7345/" target="_blank" rel="noopener">kaynak</a>). Konut kredileri KKDF ve BSMV'den muaf. Tahsis ücreti anaparanın binde 5'ini geçemez; burada üst sınır varsayıldı. Oranlar değişebilir; güncel değeri bankanın sözleşmesinden kontrol et. Bu araç bilgilendirme amaçlıdır, finansal tavsiye değildir.</p>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <span>Mustafa Cem Demirkol · aynı seriden: <a href="https://mcemdemirkol.github.io/kredi-notu-nasil-hesaplanir/">Bir kredi notu nasıl hesaplanır?</a></span>
+    <span>Renk: Sanzo Wada No.249</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const TYPES = {
+    ihtiyac: { kkdf: 15, bsmv: 15, hint: "Tüketici kredisi: faiz üzerinden <b>%15 KKDF + %15 BSMV</b>." },
+    tasit:   { kkdf: 15, bsmv: 15, hint: "Taşıt kredisi de tüketici kredisidir: <b>%15 KKDF + %15 BSMV</b>." },
+    konut:   { kkdf: 0,  bsmv: 0,  hint: "Konut kredisi <b>KKDF ve BSMV'den muaf</b>." },
+  };
+  const fmtTL = (v, d = 0) => new Intl.NumberFormat("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v) + " TL";
+  const fmtN = (v, d = 2) => new Intl.NumberFormat("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
+  const fmtP = (v, d = 2) => "%" + fmtN(v * 100, d);
+  const num = (s, int) => {
+    s = String(s).trim();
+    if (int) return Number(s.replace(/[^\d]/g, "")) || 0;
+    s = s.replace(/\s/g, "");
+    if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+    return Number(s);  // sayı değilse NaN; calc() geçersiz sayar
+  };
+
+  let type = "ihtiyac";
+  function setType(t) {
+    type = t;
+    document.querySelectorAll("[data-type]").forEach(b => b.setAttribute("aria-pressed", b.dataset.type === t));
+    $("kkdf").value = fmtN(TYPES[t].kkdf, 0);
+    $("bsmv").value = fmtN(TYPES[t].bsmv, 0);
+    $("type-hint").innerHTML = TYPES[t].hint;
+    calc();
+  }
+  document.querySelectorAll("[data-type]").forEach(b => b.addEventListener("click", () => setType(b.dataset.type)));
+
+  function schedule(P, n, i, tax) {
+    const ie = i * (1 + tax);
+    const A = ie === 0 ? P / n : P * ie / (1 - Math.pow(1 + ie, -n));
+    const rows = [];
+    let bal = P;
+    for (let k = 1; k <= n; k++) {
+      const faiz = bal * i, vergi = faiz * tax;
+      let anapara = A - faiz - vergi;
+      if (k === n) anapara = bal;
+      bal = Math.max(0, bal - anapara);
+      rows.push({ k, taksit: anapara + faiz + vergi, anapara, faiz, vergi, bal });
+    }
+    return { A, rows };
+  }
+  function irr(net, pays) {
+    // aylık iç verim: net = Σ pay_k / (1+r)^k  (ikiye bölme)
+    const f = r => pays.reduce((s, p, k) => s + p / Math.pow(1 + r, k + 1), 0) - net;
+    let lo = -0.99, hi = 1;
+    if (f(lo) * f(hi) > 0) return NaN;
+    for (let t = 0; t < 200; t++) { const m = (lo + hi) / 2; (f(m) > 0 ? lo = m : hi = m); }
+    return (lo + hi) / 2;
+  }
+
+  function calc() {
+    const P = num($("tutar").value, true), n = Math.round(num($("vade").value, true));
+    const i = num($("faiz").value) / 100, kkdf = num($("kkdf").value) / 100, bsmv = num($("bsmv").value) / 100;
+    const tahsisR = num($("tahsis").value) / 100, sigorta = num($("sigorta").value, true);
+    const ok = P > 0 && n > 0 && n <= 600 && [i, kkdf, bsmv, tahsisR].every(v => Number.isFinite(v) && v >= 0);
+    document.querySelector(".results").classList.toggle("stale", !ok);
+    $("warn").hidden = ok;
+    if (!ok) return;
+    const tax = kkdf + bsmv;
+    const { A, rows } = schedule(P, n, i, tax);
+    const sum = key => rows.reduce((s, r) => s + r[key], 0);
+    const faiz = sum("faiz"), vergi = sum("vergi"), kkdfT = faiz * kkdf, bsmvT = faiz * bsmv;
+    const tahsis = P * tahsisR, tahsisVergi = tahsis * bsmv, ucret = tahsis + tahsisVergi + sigorta;
+    const toplam = sum("taksit");
+    const bedel = toplam - P + ucret;
+    const net = P - ucret;
+    const r = irr(net, rows.map(x => x.taksit));
+    const ymo = Math.pow(1 + r, 12) - 1;
+    const nominal = i * 12, efektif = Math.pow(1 + i, 12) - 1, vergili = Math.pow(1 + i * (1 + tax), 12) - 1;
+    const Anotax = i === 0 ? P / n : P * i / (1 - Math.pow(1 + i, -n));
+
+    $("k-taksit").innerHTML = fmtN(A, 2) + "<small>TL</small>";
+    $("k-taksit-l").textContent = `${n} ay boyunca`;
+    $("k-toplam").innerHTML = fmtN(toplam, 0) + "<small>TL</small>";
+    $("k-toplam-l").textContent = `çektiğin ${fmtTL(P)} için`;
+    $("k-bedel").innerHTML = fmtN(bedel, 0) + "<small>TL</small>";
+    $("k-bedel-l").textContent = `anaparanın %${fmtN(bedel / P * 100, 1)}'i kadar`;
+    $("k-ymo").textContent = Number.isFinite(ymo) ? fmtP(ymo, 1) : "—";
+
+    const parts = [
+      ["anapara", P, "--seg-principal"],
+      ["faiz", faiz, "--seg-interest"],
+      ["KKDF", kkdfT, "--seg-kkdf"],
+      ["BSMV", bsmvT + tahsisVergi, "--seg-bsmv"],
+      ["tahsis + sigorta", tahsis + sigorta, "--seg-fee"],
+    ];
+    const all = parts.reduce((s, p) => s + p[1], 0);
+    $("stack").innerHTML = parts.map(([l, v, c]) => `<i style="width:${v / all * 100}%;background:var(${c})" title="${l}: ${fmtTL(v)}"></i>`).join("");
+    $("legend").innerHTML = parts.map(([l, v, c]) => `<div><i class="sw" style="background:var(${c})"></i>${l}<span class="amt">${fmtTL(v)}</span><span class="pct">${fmtN(v / all * 100, 1)}</span></div>`).join("");
+
+    const vergiToplam = kkdfT + bsmvT + tahsisVergi;
+    $("taxnote").innerHTML = tax > 0
+      ? `Vergiler olmasaydı taksit <b class="num">${fmtTL(Anotax, 2)}</b> olurdu. KKDF ve BSMV her taksite <b class="num">${fmtTL(A - Anotax, 2)}</b> ekliyor; toplamda <b class="num">${fmtTL(vergiToplam)}</b> vergi ödüyorsun.`
+      : `Bu kredi türünde KKDF ve BSMV yok. Maliyetin tamamı faiz ve ücretlerden geliyor.`;
+
+    const steps = [
+      ["Aylık akdi faiz", "bankanın söylediği oran", i],
+      ["Nominal yıllık faiz", "aylık × 12, bileşik değil", nominal],
+      ["Efektif yıllık faiz", "aylık faiz 12 ay bileşik", efektif],
+      ["Vergiler dahil", "faiz × (1 + KKDF + BSMV), bileşik", vergili],
+      ["Yıllık maliyet oranı", "vergi + tahsis ücreti + sigorta, iç verim", ymo],
+    ];
+    const max = Math.max(...steps.map(s => s[2]).filter(Number.isFinite), 1e-9);
+    $("ladder").innerHTML = steps.map(([t, s, v], k) =>
+      `<div class="step${k === steps.length - 1 ? " final" : ""}"><div class="t">${t}<small>${s}</small></div><div class="r">${Number.isFinite(v) ? fmtP(v, k === 0 ? 2 : 1) : "—"}</div><div class="bar"><i style="width:${Number.isFinite(v) ? v / max * 100 : 0}%"></i></div></div>`).join("");
+
+    drawChart(rows);
+    $("plan").innerHTML = `<thead><tr><th>Ay</th><th>Taksit</th><th>Anapara</th><th>Faiz</th><th>KKDF+BSMV</th><th>Kalan</th></tr></thead><tbody>` +
+      rows.map(r => `<tr><td>${r.k}</td><td>${fmtN(r.taksit)}</td><td>${fmtN(r.anapara)}</td><td>${fmtN(r.faiz)}</td><td>${fmtN(r.vergi)}</td><td>${fmtN(r.bal)}</td></tr>`).join("") +
+      `</tbody><tfoot><tr><td>Toplam</td><td>${fmtN(toplam)}</td><td>${fmtN(P)}</td><td>${fmtN(faiz)}</td><td>${fmtN(vergi)}</td><td></td></tr></tfoot>`;
+  }
+
+  function drawChart(rows) {
+    const svg = $("chart"), W = 640, H = 220, pl = 52, pr = 8, pt = 10, pb = 24;
+    const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    const max = Math.max(...rows.map(r => r.taksit)) * 1.08;
+    const n = rows.length, bw = (W - pl - pr) / n;
+    const Y = v => pt + (H - pt - pb) * (1 - v / max);
+    let s = "";
+    for (let g = 0; g <= 4; g++) {
+      const v = max * g / 4, y = Y(v);
+      s += `<line x1="${pl}" x2="${W - pr}" y1="${y}" y2="${y}" stroke="${css("--soft")}" stroke-dasharray="1 5" stroke-linecap="round"/>`;
+      s += `<text x="${pl - 6}" y="${y + 3}" text-anchor="end" font-family="Geist Mono,monospace" font-size="10" fill="${css("--mute")}">${fmtN(v, 0)}</text>`;
+    }
+    const gap = Math.min(2, bw * 0.2);
+    rows.forEach((r, k) => {
+      const x = pl + k * bw + gap / 2, w = Math.max(1, bw - gap);
+      let base = H - pb;
+      [[r.anapara, "--seg-principal"], [r.faiz, "--seg-interest"], [r.vergi, "--seg-kkdf"]].forEach(([v, c]) => {
+        const h = (H - pt - pb) * v / max;
+        s += `<rect x="${x}" y="${base - h}" width="${w}" height="${Math.max(0, h)}" fill="${css(c)}"/>`;
+        base -= h;
+      });
+      const every = n <= 12 ? 1 : n <= 36 ? 6 : n <= 120 ? 12 : 24;
+      if ((r.k === 1) || r.k % every === 0) s += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle" font-family="Geist Mono,monospace" font-size="10" fill="${css("--mute")}">${r.k}</text>`;
+    });
+    svg.innerHTML = s;
+  }
+
+  ["tutar", "vade", "faiz", "kkdf", "bsmv", "tahsis", "sigorta"].forEach(id => $(id).addEventListener("input", calc));
+  $("tutar").addEventListener("blur", e => { const v = num(e.target.value, true); if (v) e.target.value = fmtN(v, 0); });
+  $("f").addEventListener("submit", e => e.preventDefault());
+
+  const root = document.documentElement;
+  const tb = [...document.querySelectorAll(".seg [data-t]")];
+  function setTheme(t) {
+    root.dataset.theme = t;
+    tb.forEach(b => b.setAttribute("aria-pressed", b.dataset.t === t));
+    try { localStorage.setItem("kredi-tema", t); } catch (e) {}
+    calc();
+  }
+  tb.forEach(b => b.addEventListener("click", () => setTheme(b.dataset.t)));
+  let saved = null;
+  try { saved = localStorage.getItem("kredi-tema"); } catch (e) {}
+  const initial = saved || root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  tb.forEach(b => b.setAttribute("aria-pressed", b.dataset.t === initial));
+  if (saved) root.dataset.theme = saved;
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", calc);
+
+  setType("ihtiyac");
+})();
+</script>
+
+</body>
+</html>
